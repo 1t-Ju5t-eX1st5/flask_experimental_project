@@ -18,3 +18,17 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(150))
     first_name = db.Column(db.String(150))
     notes = db.relationship('Note') # Every time the user creates a new note, add its ID to the user's list
+    
+    """
+    def is_active(self):
+        return True
+    
+    def is_authenticated(self):
+        return True
+    
+    def is_anonymous(self):
+        return False
+    
+    def get_id(self):
+        return self.id
+    """
