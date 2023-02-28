@@ -1,0 +1,112 @@
+from esipy.exceptions import APIException
+from esipy import EsiApp
+from esipy import EsiClient
+from esipy import EsiSecurity
+from esipy.utils import generate_code_verifier
+
+from flask import redirect, url_for, Blueprint, session
+from flask_login import login_user, logout_user, current_user
+from sqlalchemy.orm.exc import NoResultFound
+
+from website.models import Player
+from website import db
+
+import json
+import hashlib
+import secrets
+
+with open("config.json") as f:
+    config = json.load(f)
+    app_config = config['application']
+
+class EsiData():
+    """
+    Class designed to interface with the ESI database using the EsiPy library
+
+    Requires authentication() and __init__() at minimum to work properly
+    """
+
+    def __init__(self):
+        """
+        Defines critical variables needed for the ESI client to work, including the client and security features
+        """
+        self.security = EsiSecurity(
+            redirect_uri = app_config['callback'],
+            client_id = app_config['client_id'],
+            code_verifier = generate_code_verifier(),
+            headers = app_config['headers']
+        )
+        self.client = EsiClient(
+            headers = app_config['headers'],
+            retry_requests = True,
+            security = self.security
+        )
+        self.esiapp = EsiApp().get_latest_swagger
+    def generate_state(self):
+        """
+        Generates a secure state for the EsiSecurity application to send requests to the ESI database
+        """
+        selection = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!;:*^%&#_-"
+        result = ""
+        for i in range(32):
+            result += secrets.choice(selection)
+        return hashlib.sha256(result.encode('utf-8')).hexdigest()
+    
+    def generate_url(self, token):
+        """
+        Generates the SSO url redirect to authenticate the user
+
+        Arguments: 
+        token: The state of the URL (random token recommended, use generate_state() to generate a random state ID)
+        """
+        eve_sso_auth_url = self.security.get_auth_uri(
+            state=token,
+            scopes=["esi-wallet.read_corporation_wallet.v1"]
+        )
+        return eve_sso_auth_url
+
+    def authentication(self, check_token = False, code = ""):
+        """
+        Interacts with the ESI database via the EsiPy and PySwagger libraries
+        """
+        # Get tokens using the code we retrieved earlier, and throw an error if the code doesnt work
+        try:
+            auth_response = self.security.auth(code)
+        except APIException as e:
+            return f'Login EVE Online SSO failed: {e}', 403
+        
+        # Now that we're logged in, grab the user's data from CCP's servers (or something...)
+        character_data = self.security.verify()
+        
+        # Check in the database if the user exists, and if they arent create a new user account for them
+        try:
+            user = Player.query.filter_by(character_id=character_data['sub'].split(':')[2]).first()
+        except NoResultFound:
+            user = Player()
+            user.character_id = character_data['sub'].split(':')[2]
+        user.character_owner_hash = character_data['owner']
+        user.character_name = character_data['name']
+        user.update_token(auth_response)
+
+        # New user created, now we add them to our database (I should really rename it...)
+        try:
+            db.session.merge(user)
+            db.session.commit()
+            login_user(user)
+            session.permanent = True
+        except:
+            # Whoops, something went wrong with the database, lets rewind our changes and log out the user
+            db.session.rollback()
+            logout_user()
+
+    def get_characterl_wallet(self):
+        wallet = None
+        
+        # If current user is authenticated, get wallet content
+        if current_user.is_authenticated:
+            self.security.update_token(current_user.get_sso_data)
+            op = self.esiapp.op['get_characters_character_id_wallet'](
+                character_id=current_user.character_id
+            )
+            wallet = self.client.request(op)
+        return wallet

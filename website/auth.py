@@ -1,11 +1,14 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, session
 from . import db
 from .models import User
+from .backend import esidata
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_required, login_user, logout_user, current_user
 
 auth = Blueprint('auth', __name__)
+EsiData = esidata.EsiData()
 
+"""
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == "POST":
@@ -24,12 +27,38 @@ def login():
             flash('User does not exist', category='error')
 
     return render_template("login.html", user=current_user)
-
+"""
+@auth.route('/login')
+def login():
+    token = EsiData.generate_state()
+    session['token'] = token
+    return redirect(EsiData.generate_url(token))
+    
 @auth.route('/logout')
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('auth.login'))
+    return redirect(url_for('views.home'))
+
+@auth.route('/callback')
+def callback():
+    code = request.args.get('code')
+    state = request.args.get('state')
+
+    # Security check to prevent CSRF attacks
+    session_token = session.pop('token', None)
+    if session_token is None or state is None or state != session_token:
+        return "Login EVE Online SSO failed: Session Token Mismatch", 403
+    
+    #Now that the session has been checked to be legit, pass the 
+    #code through the authentication function to authorize us
+    
+    res = EsiData.authentication(True, code)
+    if not res:
+        raise Exception
+    
+    # Now that we've been successfully authenticated, lets redirect the user back to the home page and let the backend do the work
+    return redirect(url_for('views.home'))
 
 @auth.route('/sign-up', methods=['GET', 'POST'])
 def signup():

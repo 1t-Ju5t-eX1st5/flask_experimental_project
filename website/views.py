@@ -1,14 +1,15 @@
 from flask import Blueprint, render_template, request, flash, jsonify
 from flask_login import login_required, current_user
 from .models import Note
+from .backend import esidata
 from . import db
 
 import json
 
 views = Blueprint('views', __name__)
+EsiData = esidata.EsiData()
 
 @views.route('/', methods=['GET', 'POST'])
-@login_required
 def home():
     if request.method == "POST":
         note = request.form.get('note')
@@ -33,3 +34,8 @@ def delete_note():
             db.session.commit()
 
     return jsonify({})
+
+@views.route('/wallet')
+def wallet():
+    char_wallet = EsiData.get_character_wallet()
+    return render_template('wallet.html', wallet=wallet)
