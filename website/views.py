@@ -10,6 +10,7 @@ views = Blueprint('views', __name__)
 EsiData = esidata.EsiData()
 
 @views.route('/', methods=['GET', 'POST'])
+@login_required
 def home():
     if request.method == "POST":
         note = request.form.get('note')
@@ -38,4 +39,4 @@ def delete_note():
 @views.route('/wallet')
 def wallet():
     char_wallet = EsiData.get_character_wallet()
-    return render_template('wallet.html', wallet=wallet)
+    return render_template('wallet.html', wallet=char_wallet)

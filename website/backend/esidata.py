@@ -79,11 +79,19 @@ class EsiData():
         character_data = self.security.verify()
         
         # Check in the database if the user exists, and if they arent create a new user account for them
-        try:
+        """try:
             user = Player.query.filter_by(character_id=character_data['sub'].split(':')[2]).first()
         except NoResultFound:
             user = Player()
             user.character_id = character_data['sub'].split(':')[2]
+        user.character_owner_hash = character_data['owner']
+        user.character_name = character_data['name']
+        user.update_token(auth_response)"""
+        user = Player.query.filter_by(character_id=character_data['sub'].split(':')[2]).first()
+        if user == None:
+            user = Player()
+            user.character_id = character_data['sub'].split(':')[2]
+        
         user.character_owner_hash = character_data['owner']
         user.character_name = character_data['name']
         user.update_token(auth_response)
@@ -92,14 +100,13 @@ class EsiData():
         try:
             db.session.merge(user)
             db.session.commit()
-            login_user(user)
-            session.permanent = True
+            return user
         except:
             # Whoops, something went wrong with the database, lets rewind our changes and log out the user
             db.session.rollback()
             logout_user()
 
-    def get_characterl_wallet(self):
+    def get_character_wallet(self):
         wallet = None
         
         # If current user is authenticated, get wallet content

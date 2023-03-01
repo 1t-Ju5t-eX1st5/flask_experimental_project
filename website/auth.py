@@ -54,8 +54,10 @@ def callback():
     #code through the authentication function to authorize us
     
     res = EsiData.authentication(True, code)
-    if not res:
-        raise Exception
+    if res:
+        login_user(res)
+        print("User logged in")
+        session.permanent = True
     
     # Now that we've been successfully authenticated, lets redirect the user back to the home page and let the backend do the work
     return redirect(url_for('views.home'))
