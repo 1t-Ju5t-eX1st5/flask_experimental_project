@@ -20,7 +20,7 @@ def create_app():
     app.register_blueprint(auth, url_prefix='/')
 
     # Builds the database
-    from .models import User, Note
+    from .models import User, Note, Player
     with app.app_context():
         db.create_all()
 
@@ -29,7 +29,7 @@ def create_app():
     login_manager.init_app(app)
 
     @login_manager.user_loader
-    def load_user(id):
-        return User.query.get(int(id))
+    def load_user(character_name):
+        return Player.query.get(character_name)
 
     return app

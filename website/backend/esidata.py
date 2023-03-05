@@ -61,7 +61,7 @@ class EsiData():
         """
         eve_sso_auth_url = self.security.get_auth_uri(
             state=token,
-            scopes=["esi-wallet.read_corporation_wallet.v1"]
+            scopes=["esi-wallet.read_character_wallet.v1", "esi-wallet.read_corporation_wallets.v1"]
         )
         return eve_sso_auth_url
 
@@ -100,18 +100,23 @@ class EsiData():
         try:
             db.session.merge(user)
             db.session.commit()
-            return user
+            print(user)
+            login_user(user)
+            print("Login success")
         except:
             # Whoops, something went wrong with the database, lets rewind our changes and log out the user
             db.session.rollback()
-            logout_user()
+            print("Login failed")
+        finally:
+            print("Returning user")
+            return user
 
     def get_character_wallet(self):
         wallet = None
         
         # If current user is authenticated, get wallet content
         if current_user.is_authenticated:
-            self.security.update_token(current_user.get_sso_data)
+            self.security.update_token(current_user.get_sso_data())
             op = self.esiapp.op['get_characters_character_id_wallet'](
                 character_id=current_user.character_id
             )

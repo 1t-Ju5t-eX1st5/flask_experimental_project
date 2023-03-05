@@ -28,6 +28,7 @@ def login():
 
     return render_template("login.html", user=current_user)
 """
+
 @auth.route('/login')
 def login():
     token = EsiData.generate_state()
@@ -54,13 +55,13 @@ def callback():
     #code through the authentication function to authorize us
     
     res = EsiData.authentication(True, code)
+    print(res)
     if res:
-        login_user(res)
-        print("User logged in")
-        session.permanent = True
+        return redirect(url_for('views.home'))
+    else:
+        flash('EVE ESI SSO Login failed!', category='error')
     
     # Now that we've been successfully authenticated, lets redirect the user back to the home page and let the backend do the work
-    return redirect(url_for('views.home'))
 
 @auth.route('/sign-up', methods=['GET', 'POST'])
 def signup():

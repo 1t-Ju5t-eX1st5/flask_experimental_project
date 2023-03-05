@@ -54,9 +54,9 @@ class Player(db.Model, UserMixin):
         # Helper function to return token data to esisecurity, API-style :P
         # I kinda copied this...
         return {
-            'access-tokem': self.access_token,
-            'refresh-token': self.refresh_token,
-            'token-expiry': (self.access_token_expire - datetime.utcnow()).total_seconds()
+            'access_token': self.access_token,
+            'refresh_token': self.refresh_token,
+            'expires_in': (self.access_token_expire - datetime.utcnow()).total_seconds()
         }
     
     def update_token(self, token_response):
