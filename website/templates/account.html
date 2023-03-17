@@ -1,0 +1,11 @@
+{% extends 'base.html' %}{% block title %}Account Info{% endblock %}
+{% block content %}
+
+<h2>Account details</h2>
+<br>Username: {{ current_user.username }}
+<br>Email account: {{ current_user.email }}
+<br>Created on: {{ current_user.created_date }}
+
+<br><br>
+<a id='reset-password' href="/reset-password">Reset Password</a>
+{% endblock %}

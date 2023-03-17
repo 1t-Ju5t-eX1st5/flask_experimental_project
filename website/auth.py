@@ -1,8 +1,10 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from . import db
+from .passwords import check_password
 from .models import User
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_required, login_user, logout_user, current_user
+from datetime import datetime
 
 auth = Blueprint('auth', __name__)
 
@@ -35,7 +37,7 @@ def logout():
 def signup():
     if request.method == "POST":
         email = request.form.get('email')
-        first_name = request.form.get('first-name')
+        username = request.form.get('username')
         password1 = request.form.get('password1')
         password2 = request.form.get('password2')
 
@@ -44,21 +46,21 @@ def signup():
             flash('This email is already in use', category='error')
         elif len(email) < 4:
             flash('Email must be longer than 4 characters', category='error')
-        elif len(first_name) < 2:
-            flash('First name must be greater than 1 character', category='error')
-        elif password1 != password2:
-            flash('Passwords do not match', category='error')
-        elif len(password1) < 7:
-            flash('Password length must not be shorter than 7 characters', category='error')
+        elif len(username) < 2:
+            flash('Username must be greater than 1 character', category='error')
         else:
-            # add user to the database
-            new_user = User(email=email, first_name=first_name, password=generate_password_hash(password1, method='sha256'))
-            db.session.add(new_user)
-            db.session.commit()
-            # login_user(user) --- original code
-            login_user(new_user) # correct code
-            flash('Account created successfully!', category='success')
-            return redirect(url_for('views.home'))
+            res = check_password(password1, password2)
+            if res:
+                flash(res, category='error')
+            else:
+                # add user to the database
+                new_user = User(email=email, username=username, password=generate_password_hash(password1, method='sha256'), created_date=datetime.now())
+                db.session.add(new_user)
+                db.session.commit()
+                # login_user(user) --- original code
+                login_user(new_user) # correct code
+                flash('Account created successfully!', category='success')
+                return redirect(url_for('views.home'))
 
     elif request.method == "GET":
         pass
@@ -66,3 +68,31 @@ def signup():
         pass
 
     return render_template("signup.html", user=current_user)
+
+@auth.route('/reset-password', methods=['GET', 'POST'])
+@login_required
+def reset_password():
+    if request.method == "POST":
+        current_password = request.form.get('current-password')
+        new_password = request.form.get('new-password')
+        confirm_new_password = request.form.get('confim-password')
+        if not check_password_hash(current_user.password, current_password):
+                flash('Current password does not match', category='error')
+        elif new_password == current_password:
+            flash('New password cannot be same as old password', category='error')
+        elif new_password == confirm_new_password:
+            flash('Passwords do not match', category='error')
+        else:
+            res = check_password(new_password)
+            if res:
+                flash(res, category='error')
+            else:
+                current_user.reset_password(new_password)
+                db.session.commit()
+                return redirect(url_for('views.home'))
+    elif request.method == 'GET':
+        pass
+    else:
+        pass
+
+    return render_template('reset_password.html')
