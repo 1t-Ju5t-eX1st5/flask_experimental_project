@@ -96,3 +96,12 @@ def reset_password():
         pass
 
     return render_template('reset_password.html')
+
+@auth.route('/delete-account', methods=['GET'])
+@login_required
+def delete_account():
+    user = User.query.get(current_user.id)
+    db.session.delete(user)
+    db.session.commit()
+    logout_user()
+    return redirect(url_for('auth.login'))

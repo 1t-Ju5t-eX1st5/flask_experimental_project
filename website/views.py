@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, flash, jsonify, redirect
 from flask_login import login_required, current_user
 from .models import User, Note
 from . import db
+from .cipher import VigenereCipher
 
 import json
 
@@ -42,3 +43,13 @@ def delete_note():
 @login_required
 def account():
     return render_template('account.html')
+
+@views.route('/cipher', methods=['POST', 'GET'])
+def cipher():
+    vigenere_cipher = VigenereCipher()
+    if request.method == "POST":
+        plaintext = request.form.get('plaintext')
+        encryption_key = request.form.get('key')
+        ciphertext = vigenere_cipher.encrypt(encryption_key, plaintext)
+        return render_template('cipher.html', plaintext=plaintext, encryption_key=encryption_key, ciphertext=ciphertext)
+    return render_template('cipher.html')
