@@ -44,12 +44,24 @@ def delete_note():
 def account():
     return render_template('account.html')
 
-@views.route('/cipher', methods=['POST', 'GET'])
+@views.route('/cipher')
 def cipher():
+    return render_template('cipher.html')
+
+@views.route('/cipher/<string:cipher_mode>', methods=['POST'])
+def switch_cipher(cipher_mode):
     vigenere_cipher = VigenereCipher()
-    if request.method == "POST":
+    if cipher_mode == "encrypt":
         plaintext = request.form.get('plaintext')
-        encryption_key = request.form.get('key')
+        encryption_key = request.form.get('encryption-key')
+        print(plaintext)
+        print(encryption_key)
         ciphertext = vigenere_cipher.encrypt(encryption_key, plaintext)
         return render_template('cipher.html', plaintext=plaintext, encryption_key=encryption_key, ciphertext=ciphertext)
-    return render_template('cipher.html')
+    elif cipher_mode == "decrypt":
+        ciphertext = request.form.get('ciphertext')
+        decryption_key = request.form.get('decryption-key')
+        plaintext = vigenere_cipher.decrypt(decryption_key, ciphertext)
+        return render_template('cipher.html', plaintext=plaintext, decryption_key=decryption_key, ciphertext=ciphertext)
+    else:
+        return render_template('cipher.html')
