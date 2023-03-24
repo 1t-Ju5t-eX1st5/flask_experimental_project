@@ -7,7 +7,7 @@
         <button type="submit" class="btn btn-primary">Add Note</button>
       </div>
     </form>
-    {% endblock %}
+
     <ul class="list-group list-group-flush" id="notes">
       {% for note in user.notes %}
       <li class="list-group-item">
@@ -18,3 +18,4 @@
       </li>
       {% endfor %}
     </ul>
+    {% endblock %}
