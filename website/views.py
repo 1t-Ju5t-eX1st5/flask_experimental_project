@@ -53,7 +53,7 @@ def switch_cipher(cipher_mode):
     vigenere_cipher = VigenereCipher()
     if cipher_mode == "encrypt":
         plaintext = request.form.get('plaintext')
-        encryption_key = request.form.get('encryption-key')
+        encryption_key = request.form.get('encryption-key') or vigenere_cipher.generate_key(plaintext)
         print(plaintext)
         print(encryption_key)
         ciphertext = vigenere_cipher.encrypt(encryption_key, plaintext)
@@ -61,6 +61,9 @@ def switch_cipher(cipher_mode):
     elif cipher_mode == "decrypt":
         ciphertext = request.form.get('ciphertext')
         decryption_key = request.form.get('decryption-key')
+        if decryption_key == None or decryption_key == "":
+            flash('A decryption key must be entered', category='error')
+            return render_template('cipher.html', plaintext="", decryption_key="", ciphertext="")
         plaintext = vigenere_cipher.decrypt(decryption_key, ciphertext)
         return render_template('cipher.html', plaintext=plaintext, decryption_key=decryption_key, ciphertext=ciphertext)
     else:
