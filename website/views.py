@@ -57,7 +57,7 @@ def switch_cipher(cipher_mode):
         print(plaintext)
         print(encryption_key)
         ciphertext = vigenere_cipher.encrypt(encryption_key, plaintext)
-        return render_template('cipher.html', plaintext=plaintext, encryption_key=encryption_key, ciphertext=ciphertext)
+        return render_template('cipher.html', plaintext=plaintext, encryptioncl_key=encryption_key, ciphertext=ciphertext)
     elif cipher_mode == "decrypt":
         ciphertext = request.form.get('ciphertext')
         decryption_key = request.form.get('decryption-key')
