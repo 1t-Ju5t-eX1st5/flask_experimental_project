@@ -23,16 +23,3 @@ class User(db.Model, UserMixin):
 
     def reset_password(self, new_password):
         self.password = generate_password_hash(new_password)
-    """
-    def is_active(self):
-        return True
-    
-    def is_authenticated(self):
-        return True
-    
-    def is_anonymous(self):
-        return False
-    
-    def get_id(self):
-        return self.id
-    """
