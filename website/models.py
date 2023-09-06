@@ -9,7 +9,6 @@ class Note(db.Model):
     data = db.Column(db.String(10000))
     date = db.Column(db.DateTime(timezone=True), default=func.now())
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))   # Column contains data from the class User (foreign relationship)
-    
 
 
 class User(db.Model, UserMixin):
@@ -19,6 +18,7 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(150))
     username = db.Column(db.String(150))
     created_date = db.Column(db.DateTime(timezone=True), default=func.now())
+    is_developer = db.Column(db.Boolean, default=False)
     notes = db.relationship('Note') # Every time the user creates a new note, add its ID to the user's list
 
     def reset_password(self, new_password):
